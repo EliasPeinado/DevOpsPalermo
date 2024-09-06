@@ -51,7 +51,7 @@ jobs:
           uses: docker/build-push-action@v4
           with:
             context: .
-            file: Dockerfile
+            file: DevOpsPalermo/Dockerfile
             push: true
             tags: ${{ secrets.DOCKER_USER }}/devops-palermo:${{ github.sha }}
             labels: ${{ steps.meta.outputs.labels }}
