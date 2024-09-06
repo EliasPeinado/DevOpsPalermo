@@ -65,6 +65,6 @@ jobs:
         # Only run this step if the branch is main
         if: github.ref == 'refs/heads/master'
         env:
-          deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}/docker.io/eliaspeinado/devops-palermo:${{ github.sha }}
         run: |
           curl "$deploy_url"
