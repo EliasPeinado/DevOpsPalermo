@@ -1,0 +1,17 @@
+﻿version: '3.8'
+
+services:
+  devopspalermo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    volumes:
+      - ./devops_palermo.db:/app/devops_palermo.db
+
+volumes:
+  db_data:
