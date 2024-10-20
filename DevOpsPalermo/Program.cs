@@ -2,6 +2,7 @@ using DevOpsPalermo.Models;
 using DevOpsPalermo.Services.Repositories;
 using DevOpsPalermo.Services;
 using Microsoft.EntityFrameworkCore;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +19,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IItemService, ItemService>();
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+});
+builder.Services.AddHealthChecks();
 
 
 
@@ -30,15 +40,24 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.Migrate();
 }
 
+app.MapHealthChecks("/health");
+
+
+app.UseCors("CorsPolicy");
+app.MapGet("/", () => " En vivo!");
+
 
 app.UseSwagger();
 app.UseSwaggerUI();
 
 
 app.UseHttpsRedirection();
-
+app.UseHttpMetrics();
 app.UseAuthorization();
 
 app.MapControllers();
+app.UseMetricServer();
+app.UseHttpMetrics();
+app.MapMetrics();
 
 app.Run();
