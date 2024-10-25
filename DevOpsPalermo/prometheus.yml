@@ -3,4 +3,4 @@
 scrape_configs:
   - job_name: 'DevOpsApi'
     static_configs:
-      - targets: ['host.docker.internal:8080'] 
+      - targets: ['devops-palermo.onrender.com'] 
