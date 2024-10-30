@@ -68,3 +68,42 @@ jobs:
           deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}&imgURL=docker.io/eliaspeinado/devops-palermo:${{ github.sha }}
         run: |
           curl "$deploy_url"
+          
+  build_and_push_to_ecr:
+    name: Build and Push Docker image to Amazon ECR
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+  
+    steps:
+        - name: Check out repo
+          uses: actions/checkout@v3
+  
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v1
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: us-east-2
+  
+        - name: Log in to Amazon ECR
+          run: aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 039612851830.dkr.ecr.us-east-2.amazonaws.com
+  
+        - name: Build Docker image for Amazon ECR
+          uses: docker/build-push-action@v4
+          with:
+            context: .
+            file: DevOpsPalermo/Dockerfile
+            push: true
+            tags: 039612851830.dkr.ecr.us-east-2.amazonaws.com/devops_palermo:latest
+  
+  deploy_to_ecs:
+      name: Deploy to ECS
+      runs-on: ubuntu-latest
+      needs: build_and_push_to_ecr
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+  
+      steps:
+        - name: Update ECS service
+          run: |
+            aws ecs update-service --cluster DevOpsCluster --service DevOpsInicial --force-new-deployment --region us-east-2
