@@ -98,18 +98,31 @@ jobs:
             tags: 039612851830.dkr.ecr.us-east-2.amazonaws.com/devops_palermo:latest
   
   deploy_to_ecs:
-    name: Deploy to ECS
-    runs-on: ubuntu-latest
-    needs: build_and_push_to_ecr
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-    steps:
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@v1
-          with:
-            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws-region: us-east-2
-        
-        - name: Update ECS service
-          run: |
-            aws ecs update-service --cluster DevOpsCluster --service DevOpsInicial --force-new-deployment --region us-east-2
+  name: Deploy to ECS using CloudFormation
+  runs-on: ubuntu-latest
+  needs: build_and_push_to_ecr
+  if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+  steps:
+    - name: Check out repo
+      uses: actions/checkout@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-2
+
+    - name: Update CloudFormation Stack
+      run: |
+        aws cloudformation deploy \
+          --template-file DevOpsPalermo/template.yaml \
+          --stack-name DevOpsStack \
+          --capabilities CAPABILITY_IAM
+
+    - name: Output Load Balancer DNS
+      run: |
+        aws cloudformation describe-stacks \
+          --stack-name DevOpsStack \
+          --query 'Stacks[0].Outputs[?OutputKey==`LoadBalancerDNS`].OutputValue' \
+          --output text
