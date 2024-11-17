@@ -44,7 +44,7 @@ app.MapHealthChecks("/health");
 
 
 app.UseCors("CorsPolicy");
-app.MapGet("/", () => " En vivo!");
+app.MapGet("/", () => "!En vivo!");
 
 
 app.UseSwagger();
